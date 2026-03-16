@@ -666,6 +666,7 @@
             <select id="f-eq"><option value="">Select equipment…</option></select>
           </div>
           <div class="fg"><label>Brand / Model</label><input type="text" id="f-brand" placeholder="e.g. Atlas, Snap-on…"></div>
+          <div class="fg"><label>Install / Purchase Date</label><input type="date" id="f-install"></div>
           <div class="fg"><label>Quantity</label><input type="number" id="f-qty" value="1" min="1"></div>
           <div class="fg">
             <label>Status</label>
@@ -709,7 +710,7 @@
         <table>
           <thead><tr>
             <th>ID</th><th>Shop</th><th>Equipment</th><th>Brand / Model</th><th>Qty</th>
-            <th>Status</th><th>Condition</th><th>Last PM Date</th><th>Interval</th>
+            <th>Status</th><th>Condition</th><th>Install Date</th><th>Asset Age</th><th>Last PM Date</th><th>Interval</th>
             <th>Next PM Due</th><th>PM Status</th><th>Last PM Task</th><th>Performed By</th><th>Notes</th><th>Actions</th>
           </tr></thead>
           <tbody id="at-tbody"></tbody>
@@ -736,6 +737,7 @@
         </div>
         <div class="fg"><label>Equipment</label><select id="e-eq"></select></div>
         <div class="fg"><label>Brand / Model</label><input type="text" id="e-brand"></div>
+        <div class="fg"><label>Install / Purchase Date</label><input type="date" id="e-install"></div>
         <div class="fg"><label>Quantity</label><input type="number" id="e-qty" min="1"></div>
         <div class="fg">
           <label>Status</label>
@@ -806,13 +808,13 @@ const ALL_EQ = [...EQ["Mechanic Shop"],...EQ["Body & Paint Shop"],...EQ["Detail 
 
 const SEED = {
   "Manheim Atlanta": [
-    {id:1,shop:"Mechanic Shop",equipment:"MECH 2-Post Hydraulic Lift",brand:"Atlas",qty:16,status:"Active",condition:"Fair",pmDate:"2025-03-01",pmInterval:365,performedBy:"Vendor",pmTask:"Lift Inspection",notes:"Reliable serviced all lifts"},
-    {id:2,shop:"Body & Paint Shop",equipment:"B&P Fire Suppression System",brand:"Clarke Systems",qty:1,status:"Active",condition:"Good",pmDate:"2026-02-24",pmInterval:180,performedBy:"Vendor",pmTask:"System Check",notes:"Full System test performed"},
-    {id:3,shop:"Detail Shop",equipment:"DETL Canister Vacuum System",brand:"Eurovac",qty:4,status:"Active",condition:"Poor",pmDate:"2025-12-21",pmInterval:30,performedBy:"In-House Maintenance",pmTask:"Clean bag inserts",notes:"Detrash Vac is failing"},
-    {id:4,shop:"Body & Paint Shop",equipment:"B&P Jack Stands",brand:"Snap on",qty:2,status:"Active",condition:"Excellent",pmDate:"2026-03-13",pmInterval:180,performedBy:"Technician",pmTask:"New purchase",notes:"New"}
+    {id:1,shop:"Mechanic Shop",equipment:"MECH 2-Post Hydraulic Lift",brand:"Atlas",qty:16,status:"Active",condition:"Fair",installDate:"2018-06-15",pmDate:"2025-03-01",pmInterval:365,performedBy:"Vendor",pmTask:"Lift Inspection",notes:"Reliable serviced all lifts"},
+    {id:2,shop:"Body & Paint Shop",equipment:"B&P Fire Suppression System",brand:"Clarke Systems",qty:1,status:"Active",condition:"Good",installDate:"2020-11-01",pmDate:"2026-02-24",pmInterval:180,performedBy:"Vendor",pmTask:"System Check",notes:"Full System test performed"},
+    {id:3,shop:"Detail Shop",equipment:"DETL Canister Vacuum System",brand:"Eurovac",qty:4,status:"Active",condition:"Poor",installDate:"2021-03-10",pmDate:"2025-12-21",pmInterval:30,performedBy:"In-House Maintenance",pmTask:"Clean bag inserts",notes:"Detrash Vac is failing"},
+    {id:4,shop:"Body & Paint Shop",equipment:"B&P Jack Stands",brand:"Snap on",qty:2,status:"Active",condition:"Excellent",installDate:"2026-03-01",pmDate:"2026-03-13",pmInterval:180,performedBy:"Technician",pmTask:"New purchase",notes:"New"}
   ],
   "MARS": [
-    {id:1,shop:"Mechanic Shop",equipment:"MECH MIG Welder",brand:"Broach",qty:1,status:"Active",condition:"Good",pmDate:"2026-03-10",pmInterval:30,performedBy:"Technician",pmTask:"Inspection",notes:""}
+    {id:1,shop:"Mechanic Shop",equipment:"MECH MIG Welder",brand:"Broach",qty:1,status:"Active",condition:"Good",installDate:"2023-07-20",pmDate:"2026-03-10",pmInterval:30,performedBy:"Technician",pmTask:"Inspection",notes:""}
   ]
 };
 
@@ -998,7 +1000,7 @@ function renderAssets() {
 
   const tbody = document.getElementById('at-tbody');
   if (!assets.length) {
-    tbody.innerHTML=`<tr><td colspan="15"><div class="empty-st"><div class="ei">📋</div><p>No assets recorded for this shop yet.<br>Use the form above to add the first asset.</p></div></td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="17"><div class="empty-st"><div class="ei">📋</div><p>No assets recorded for this shop yet.<br>Use the form above to add the first asset.</p></div></td></tr>`;
     return;
   }
   const today = new Date(); today.setHours(0,0,0,0);
@@ -1009,6 +1011,23 @@ function renderAssets() {
     const daysLeft = nxt ? Math.floor((nxt-today)/86400000) : null;
     const nxtColor = st==='red'?'var(--c-red)':st==='yellow'?'var(--c-yellow)':'var(--m-gray-700)';
     const daysNote = daysLeft!==null?`<div style="font-size:10px;color:${nxtColor};margin-top:1px">${daysLeft<0?Math.abs(daysLeft)+' days overdue':daysLeft+' days left'}</div>`:'';
+
+    // Asset age calculation
+    let ageTd = '—';
+    if (a.installDate) {
+      const inst = new Date(a.installDate + 'T00:00:00');
+      const totalDays = Math.floor((today - inst) / 86400000);
+      if (totalDays >= 0) {
+        const yrs = Math.floor(totalDays / 365);
+        const mos = Math.floor((totalDays % 365) / 30);
+        const ageStr = yrs > 0
+          ? (mos > 0 ? `${yrs}y ${mos}m` : `${yrs}y`)
+          : (mos > 0 ? `${mos}m` : `${totalDays}d`);
+        // Color code: >10y red, >5y yellow, else green
+        const ageColor = yrs >= 10 ? 'var(--c-red)' : yrs >= 5 ? 'var(--c-yellow)' : 'var(--c-green)';
+        ageTd = `<span style="font-weight:700;color:${ageColor};font-size:12px">${ageStr}</span>`;
+      }
+    }
 
     const pmPill = !a.pmDate ? '<span class="pill grey">No PM</span>'
       : st==='red'    ? '<span class="pill red"><span class="pd"></span>Overdue</span>'
@@ -1032,6 +1051,8 @@ function renderAssets() {
       <td class="mono">${a.qty}</td>
       <td>${stPill}</td>
       <td>${condPill}</td>
+      <td style="font-size:12px;color:var(--m-gray-600)">${fmtD(a.installDate)}</td>
+      <td style="font-size:12px;white-space:nowrap">${ageTd}</td>
       <td style="font-size:12px;color:var(--m-gray-600)">${fmtD(a.pmDate)}</td>
       <td style="font-size:12px" class="muted">${a.pmInterval}d</td>
       <td style="font-size:12px">${nxtStr}${daysNote}</td>
@@ -1068,6 +1089,7 @@ function addAsset(){
   assets.push({
     id:newId,shop,equipment:eq,
     brand:document.getElementById('f-brand').value.trim(),
+    installDate:document.getElementById('f-install').value||null,
     qty:parseInt(document.getElementById('f-qty').value)||1,
     status:document.getElementById('f-status').value,
     condition:document.getElementById('f-cond').value,
@@ -1078,7 +1100,7 @@ function addAsset(){
     notes:document.getElementById('f-notes').value.trim()
   });
   setA(curLoc,assets);
-  ['f-brand','f-pmdate','f-task','f-notes'].forEach(id=>document.getElementById(id).value='');
+  ['f-brand','f-install','f-pmdate','f-task','f-notes'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-shop').value='';
   document.getElementById('f-eq').innerHTML='<option value="">Select equipment…</option>';
   document.getElementById('f-qty').value='1';
@@ -1104,6 +1126,7 @@ function openEdit(id){
   const list=EQ[a.shop]||ALL_EQ;
   document.getElementById('e-eq').innerHTML=list.map(e=>`<option${e===a.equipment?' selected':''}>${e}</option>`).join('');
   document.getElementById('e-brand').value=a.brand||'';
+  document.getElementById('e-install').value=a.installDate||'';
   document.getElementById('e-qty').value=a.qty;
   document.getElementById('e-status').value=a.status;
   document.getElementById('e-cond').value=a.condition;
@@ -1123,6 +1146,7 @@ function saveEdit(){
     shop:document.getElementById('e-shop').value,
     equipment:document.getElementById('e-eq').value,
     brand:document.getElementById('e-brand').value.trim(),
+    installDate:document.getElementById('e-install').value||null,
     qty:parseInt(document.getElementById('e-qty').value)||1,
     status:document.getElementById('e-status').value,
     condition:document.getElementById('e-cond').value,
