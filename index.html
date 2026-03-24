@@ -668,7 +668,7 @@
           <div class="fg"><label>Brand / Model</label><input type="text" id="f-brand" placeholder="e.g. Atlas, Snap-on…"></div>
           <div class="fg"><label>Install / Purchase Date</label><input type="date" id="f-install"></div>
           <div class="fg"><label>Asset Value ($)</label><input type="number" id="f-value" min="0" step="0.01" placeholder="e.g. 4500.00"></div>
-          <div class="fg"><label>Quantity</label><input type="number" id="f-qty" value="1" min="1"></div>
+          <div class="fg"><label>Serial Number</label><input type="text" id="f-serial" placeholder="e.g. SN-2024-00142"></div>
           <div class="fg">
             <label>Status</label>
             <select id="f-status"><option>Active</option><option>Out of Service</option><option>Retired</option></select>
@@ -711,7 +711,7 @@
         <table>
           <thead><tr>
             <th>ID</th><th>Shop</th><th>Equipment</th><th>Brand / Model</th><th>Qty</th>
-            <th>Status</th><th>Condition</th><th>Install Date</th><th>Asset Age</th><th>Asset Value</th><th>Total Value</th><th>Last PM Date</th><th>Interval</th>
+            <th>Status</th><th>Condition</th><th>Serial Number</th><th>Install Date</th><th>Asset Age</th><th>Asset Value</th><th>Last PM Date</th><th>Interval</th>
             <th>Next PM Due</th><th>PM Status</th><th>Last PM Task</th><th>Performed By</th><th>Notes</th><th>Actions</th>
           </tr></thead>
           <tbody id="at-tbody"></tbody>
@@ -740,7 +740,7 @@
         <div class="fg"><label>Brand / Model</label><input type="text" id="e-brand"></div>
         <div class="fg"><label>Install / Purchase Date</label><input type="date" id="e-install"></div>
         <div class="fg"><label>Asset Value ($)</label><input type="number" id="e-value" min="0" step="0.01"></div>
-        <div class="fg"><label>Quantity</label><input type="number" id="e-qty" min="1"></div>
+        <div class="fg"><label>Serial Number</label><input type="text" id="e-serial"></div>
         <div class="fg">
           <label>Status</label>
           <select id="e-status"><option>Active</option><option>Out of Service</option><option>Retired</option></select>
@@ -798,7 +798,7 @@ const LOCATIONS = [
   "Manheim Rochester","Manheim San Antonio","Manheim San Diego","Manheim San Francisco Bay",
   "Manheim Seattle","Manheim Southern California","Manheim St Louis","Manheim St Pete",
   "Manheim Statesville","Manheim Tampa","Manheim Texas Hobby","Manheim Tucson",
-  "Manheim Tulsa","Manheim Utah","MARS"
+  "Manheim Tulsa","Manheim Utah"
 ];
 
 const EQ = {
@@ -810,14 +810,11 @@ const ALL_EQ = [...EQ["Mechanic Shop"],...EQ["Body & Paint Shop"],...EQ["Detail 
 
 const SEED = {
   "Manheim Atlanta": [
-    {id:1,shop:"Mechanic Shop",equipment:"MECH 2-Post Hydraulic Lift",brand:"Atlas",qty:16,status:"Active",condition:"Fair",installDate:"2018-06-15",assetValue:3200,pmDate:"2025-03-01",pmInterval:365,performedBy:"Vendor",pmTask:"Lift Inspection",notes:"Reliable serviced all lifts"},
-    {id:2,shop:"Body & Paint Shop",equipment:"B&P Fire Suppression System",brand:"Clarke Systems",qty:1,status:"Active",condition:"Good",installDate:"2020-11-01",assetValue:8500,pmDate:"2026-02-24",pmInterval:180,performedBy:"Vendor",pmTask:"System Check",notes:"Full System test performed"},
-    {id:3,shop:"Detail Shop",equipment:"DETL Canister Vacuum System",brand:"Eurovac",qty:4,status:"Active",condition:"Poor",installDate:"2021-03-10",assetValue:1200,pmDate:"2025-12-21",pmInterval:30,performedBy:"In-House Maintenance",pmTask:"Clean bag inserts",notes:"Detrash Vac is failing"},
-    {id:4,shop:"Body & Paint Shop",equipment:"B&P Jack Stands",brand:"Snap on",qty:2,status:"Active",condition:"Excellent",installDate:"2026-03-01",assetValue:285,pmDate:"2026-03-13",pmInterval:180,performedBy:"Technician",pmTask:"New purchase",notes:"New"}
+    {id:1,shop:"Mechanic Shop",equipment:"MECH 2-Post Hydraulic Lift",brand:"Atlas",serialNumber:"ATL-LIFT-001",status:"Active",condition:"Fair",installDate:"2018-06-15",assetValue:3200,pmDate:"2025-03-01",pmInterval:365,performedBy:"Vendor",pmTask:"Lift Inspection",notes:"Reliable serviced all lifts"},
+    {id:2,shop:"Body & Paint Shop",equipment:"B&P Fire Suppression System",brand:"Clarke Systems",serialNumber:"ATL-FSS-001",status:"Active",condition:"Good",installDate:"2020-11-01",assetValue:8500,pmDate:"2026-02-24",pmInterval:180,performedBy:"Vendor",pmTask:"System Check",notes:"Full System test performed"},
+    {id:3,shop:"Detail Shop",equipment:"DETL Canister Vacuum System",brand:"Eurovac",serialNumber:"ATL-VAC-003",status:"Active",condition:"Poor",installDate:"2021-03-10",assetValue:1200,pmDate:"2025-12-21",pmInterval:30,performedBy:"In-House Maintenance",pmTask:"Clean bag inserts",notes:"Detrash Vac is failing"},
+    {id:4,shop:"Body & Paint Shop",equipment:"B&P Jack Stands",brand:"Snap on",serialNumber:"ATL-JST-002",status:"Active",condition:"Excellent",installDate:"2026-03-01",assetValue:285,pmDate:"2026-03-13",pmInterval:180,performedBy:"Technician",pmTask:"New purchase",notes:"New"}
   ],
-  "MARS": [
-    {id:1,shop:"Mechanic Shop",equipment:"MECH MIG Welder",brand:"Broach",qty:1,status:"Active",condition:"Good",installDate:"2023-07-20",assetValue:2100,pmDate:"2026-03-10",pmInterval:30,performedBy:"Technician",pmTask:"Inspection",notes:""}
-  ]
 };
 
 /* ── Storage ── */
@@ -1002,7 +999,7 @@ function renderAssets() {
 
   const tbody = document.getElementById('at-tbody');
   if (!assets.length) {
-    tbody.innerHTML=`<tr><td colspan="19"><div class="empty-st"><div class="ei">📋</div><p>No assets recorded for this shop yet.<br>Use the form above to add the first asset.</p></div></td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="18"><div class="empty-st"><div class="ei">📋</div><p>No assets recorded for this shop yet.<br>Use the form above to add the first asset.</p></div></td></tr>`;
     return;
   }
   const today = new Date(); today.setHours(0,0,0,0);
@@ -1050,13 +1047,12 @@ function renderAssets() {
       <td style="font-size:12px;white-space:nowrap" class="muted">${a.shop}</td>
       <td class="fw6" style="white-space:nowrap">${a.equipment}</td>
       <td class="muted">${a.brand||'—'}</td>
-      <td class="mono">${a.qty}</td>
       <td>${stPill}</td>
       <td>${condPill}</td>
+      <td class="mono" style="font-size:12px">${a.serialNumber||'—'}</td>
       <td style="font-size:12px;color:var(--m-gray-600)">${fmtD(a.installDate)}</td>
       <td style="font-size:12px;white-space:nowrap">${ageTd}</td>
       <td style="font-size:12px;white-space:nowrap;font-weight:600;color:var(--m-gray-700)">${a.assetValue!=null?'$'+Number(a.assetValue).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
-      <td style="font-size:12px;white-space:nowrap;font-weight:600;color:var(--m-navy)">${a.assetValue!=null?'$'+(Number(a.assetValue)*Number(a.qty)).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
       <td style="font-size:12px;color:var(--m-gray-600)">${fmtD(a.pmDate)}</td>
       <td style="font-size:12px" class="muted">${a.pmInterval}d</td>
       <td style="font-size:12px">${nxtStr}${daysNote}</td>
@@ -1093,9 +1089,9 @@ function addAsset(){
   assets.push({
     id:newId,shop,equipment:eq,
     brand:document.getElementById('f-brand').value.trim(),
+    serialNumber:document.getElementById('f-serial').value.trim()||null,
     installDate:document.getElementById('f-install').value||null,
     assetValue:document.getElementById('f-value').value!==''?parseFloat(document.getElementById('f-value').value):null,
-    qty:parseInt(document.getElementById('f-qty').value)||1,
     status:document.getElementById('f-status').value,
     condition:document.getElementById('f-cond').value,
     pmDate:pmd,
@@ -1105,10 +1101,9 @@ function addAsset(){
     notes:document.getElementById('f-notes').value.trim()
   });
   setA(curLoc,assets);
-  ['f-brand','f-install','f-value','f-pmdate','f-task','f-notes'].forEach(id=>document.getElementById(id).value='');
+  ['f-brand','f-serial','f-install','f-value','f-pmdate','f-task','f-notes'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-shop').value='';
   document.getElementById('f-eq').innerHTML='<option value="">Select equipment…</option>';
-  document.getElementById('f-qty').value='1';
   document.getElementById('f-status').selectedIndex=0;
   document.getElementById('f-cond').selectedIndex=0;
   document.getElementById('f-by').selectedIndex=0;
@@ -1133,7 +1128,7 @@ function openEdit(id){
   document.getElementById('e-brand').value=a.brand||'';
   document.getElementById('e-install').value=a.installDate||'';
   document.getElementById('e-value').value=a.assetValue!=null?a.assetValue:'';
-  document.getElementById('e-qty').value=a.qty;
+  document.getElementById('e-serial').value=a.serialNumber||'';
   document.getElementById('e-status').value=a.status;
   document.getElementById('e-cond').value=a.condition;
   document.getElementById('e-pmdate').value=a.pmDate||'';
@@ -1152,9 +1147,9 @@ function saveEdit(){
     shop:document.getElementById('e-shop').value,
     equipment:document.getElementById('e-eq').value,
     brand:document.getElementById('e-brand').value.trim(),
+    serialNumber:document.getElementById('e-serial').value.trim()||null,
     installDate:document.getElementById('e-install').value||null,
     assetValue:document.getElementById('e-value').value!==''?parseFloat(document.getElementById('e-value').value):null,
-    qty:parseInt(document.getElementById('e-qty').value)||1,
     status:document.getElementById('e-status').value,
     condition:document.getElementById('e-cond').value,
     pmDate:document.getElementById('e-pmdate').value,
